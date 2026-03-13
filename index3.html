@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Station 3: Die nackte Wahrheit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Shadows+Into+Light&family=Fira+Code:wght@400;500&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .desk-bg {
+            position: fixed;
+            inset: 0;
+            background-image: url('https://images.unsplash.com/photo-1454165833767-027ffea10c37?q=80&w=2070');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.2) saturate(0.3);
+            z-index: -1;
+        }
+
+        #work-surface {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .doc {
+            position: absolute;
+            width: 180px;
+            min-height: 120px;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+            padding: 15px;
+            background: #fdfdfd;
+            color: #1e293b;
+            border-radius: 2px;
+            border: 1px solid #cbd5e1;
+            transition: transform 0.1s ease;
+        }
+        .doc:active { cursor: grabbing; z-index: 500 !important; }
+
+        .doc-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.98);
+            z-index: 1000;
+            display: none;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        .doc-overlay.active { display: flex; flex-direction: column; }
+
+        .paper-sheet {
+            background: #fff;
+            color: #1e293b;
+            padding: 4rem;
+            max-width: 850px;
+            width: 100%;
+            margin: 1rem auto;
+            box-shadow: 0 0 70px rgba(0,0,0,0.6);
+            font-family: 'Times New Roman', Times, serif;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .paper-header {
+            font-family: Arial, sans-serif;
+            font-size: 0.75rem;
+            margin-bottom: 2rem;
+            color: #444;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        .ledger {
+            position: fixed;
+            left: 2rem;
+            top: 2rem;
+            bottom: 10rem;
+            width: 350px;
+            background: #fefce8;
+            color: #1e293b;
+            padding: 2rem;
+            border-radius: 4px;
+            box-shadow: 10px 0 40px rgba(0,0,0,0.5);
+            font-family: 'Shadows Into Light', cursive;
+            z-index: 50;
+            overflow-y: auto;
+            border-left: 12px solid #3b82f6;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+            padding: 1.5rem 2.5rem;
+        }
+
+        .calc-input {
+            background: transparent;
+            border-bottom: 2px dashed #64748b;
+            width: 100px;
+            text-align: right;
+            outline: none;
+            color: #2563eb;
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        #page-transition {
+            position: fixed;
+            inset: 0;
+            background: #020617;
+            z-index: 9000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem;
+        }
+        #page-transition.active { display: flex; animation: roomFade 1.5s forwards; }
+
+        @keyframes roomFade { from { opacity: 0; } to { opacity: 1; } }
+
+        .fine-print { font-size: 0.7rem; color: #666; line-height: 1.2; margin-top: 2rem; }
+        .table-legal { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.85rem; }
+        .table-legal td, .table-legal th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div class="desk-bg"></div>
+
+    <!-- NARRATIVE EINFÜHRUNG -->
+    <div id="story-intro" class="fixed inset-0 z-[2000] bg-slate-950 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-1000">
+        <div class="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-8 border border-red-500/20 shadow-2xl">
+            <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        </div>
+        <h2 class="text-blue-400 font-black tracking-[0.4em] uppercase text-sm mb-6">Station 3 - Der Kassensturz</h2>
+        <p class="max-w-xl text-slate-300 italic leading-relaxed mb-12 text-lg">
+            "Rechnungen sind wie Labyrinthe. Leon muss lernen, hinter die Fassade der glänzenden Angebote zu blicken. Hilf ihm, die versteckten Kosten zu finden und die wahre Monatsbilanz zu ziehen. Sei vorsichtig: Die Wahrheit steht oft in den Fußnoten."
+        </p>
+        <button onclick="hideStory()" class="bg-blue-600 text-white px-16 py-4 rounded-2xl font-black active:scale-95 transition-all shadow-2xl uppercase tracking-widest text-sm">Finanzcheck starten</button>
+    </div>
+
+    <!-- HAUSHALTSBUCH -->
+    <div class="ledger">
+        <h3 class="text-2xl font-black mb-6 border-b-2 border-blue-300 pb-2 uppercase tracking-tighter">Budget-Planung Feb.</h3>
+        
+        <div class="space-y-6">
+            <section>
+                <p class="text-xs font-black text-slate-500 uppercase mb-2">Einnahmen</p>
+                <div class="flex justify-between items-center"><span class="text-lg">Netto-Lohn:</span><div><input type="number" id="in-salary" class="calc-input"> €</div></div>
+            </section>
+
+            <section>
+                <p class="text-xs font-black text-slate-500 uppercase mb-2">Fixkosten (monatlich)</p>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-red-700"><span>Miete:</span><div><input type="number" id="in-rent" class="calc-input"> €</div></div>
+                    <div class="flex justify-between items-center text-red-700"><span>Versicherung (Ant.):</span><div><input type="number" id="in-ins" class="calc-input"> €</div></div>
+                    <div class="flex justify-between items-center text-red-700"><span>Handy/Vertrag:</span><div><input type="number" id="in-phone" class="calc-input"> €</div></div>
+                    <div class="flex justify-between items-center text-red-700"><span>PS5 Kredit:</span><div><input type="number" id="in-ps5" class="calc-input"> €</div></div>
+                </div>
+            </section>
+
+            <section>
+                <p class="text-xs font-black text-slate-500 uppercase mb-2">Variable & Versteckte</p>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-orange-700"><span>Essen/Drogerie:</span><div><input type="number" id="in-food" class="calc-input"> €</div></div>
+                    <div class="flex justify-between items-center text-orange-700"><span>Abos (Summe):</span><div><input type="number" id="in-subs" class="calc-input"> €</div></div>
+                    <div class="flex justify-between items-center text-orange-700"><span>Bar-Bedarf:</span><div><input type="number" id="in-cash" class="calc-input"> €</div></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- SPIELFLÄCHE -->
+    <div id="work-surface">
+        <!-- Dokumente (Zufällige Positionen) -->
+        <div class="doc rotate-[-2deg]" style="top:15%; right:22%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase">Lohn/Gehalt</p>
+            <button onclick="openDoc('ov-salary')" class="mt-4 w-full bg-slate-100 text-[8px] py-1 font-bold uppercase">Öffnen</button>
+        </div>
+
+        <div class="doc rotate-[6deg]" style="top:32%; right:10%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase">Mietvertrag</p>
+            <button onclick="openDoc('ov-rent')" class="mt-4 w-full bg-slate-100 text-[8px] py-1 font-bold uppercase">Prüfen</button>
+        </div>
+
+        <div class="doc bg-blue-50 border-blue-200 rotate-[-10deg]" style="top:55%; right:25%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b border-blue-200 mb-2 uppercase">Haftpflicht</p>
+            <button onclick="openDoc('ov-ins')" class="mt-4 w-full bg-blue-100 text-[8px] py-1 font-bold uppercase text-blue-900">Police</button>
+        </div>
+
+        <div class="doc rotate-[15deg]" style="top:10%; right:45%; background:#fff9c4;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b border-yellow-300 mb-2 uppercase">Kassenbelege</p>
+            <button onclick="openDoc('ov-food')" class="mt-4 w-full bg-yellow-200 text-[8px] py-1 font-bold uppercase">Checken</button>
+        </div>
+
+        <div class="doc border-l-4 border-red-600 rotate-[-5deg]" style="top:48%; right:45%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase text-red-800">Kredit Bank</p>
+            <button onclick="openDoc('ov-ps5')" class="mt-4 w-full bg-red-50 text-[8px] py-1 font-bold uppercase">Details</button>
+        </div>
+
+        <div class="doc rotate-[12deg]" style="top:65%; right:42%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase">Telefonrechnung</p>
+            <button onclick="openDoc('ov-phone')" class="mt-4 w-full bg-slate-100 text-[8px] py-1 font-bold uppercase">Ansehen</button>
+        </div>
+
+        <div class="doc rotate-[-15deg]" style="top:75%; right:10%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase text-purple-800">Netcloud</p>
+            <button onclick="openDoc('ov-subs-1')" class="mt-4 w-full bg-purple-50 text-[8px] py-1 font-bold uppercase">Abo</button>
+        </div>
+
+        <div class="doc rotate-[20deg]" style="top:78%; right:28%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase text-green-800">Gym Info</p>
+            <button onclick="openDoc('ov-subs-2')" class="mt-4 w-full bg-green-50 text-[8px] py-1 font-bold uppercase">Mitgliedschaft</button>
+        </div>
+
+        <div class="doc rotate-[5deg]" style="top:38%; right:60%;" onmousedown="focusDoc(this)" ontouchstart="focusDoc(this)">
+            <p class="text-[10px] font-black border-b mb-2 uppercase">Bankbeleg</p>
+            <button onclick="openDoc('ov-cash')" class="mt-4 w-full bg-slate-100 text-[8px] py-1 font-bold uppercase text-slate-500">Auszahlung</button>
+        </div>
+    </div>
+
+    <!-- UNTERE BAR -->
+    <div class="bottom-bar">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="hidden sm:block">
+                <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Monatliche Liquiditätsanalyse</p>
+                <h4 class="text-lg font-bold text-white tracking-tight italic underline decoration-blue-500">Finanzielle Bilanz:</h4>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="relative group">
+                    <input type="text" id="final-result" class="bg-black/60 border-2 border-slate-700 p-5 rounded-2xl text-center text-3xl font-black w-48 outline-none focus:border-red-500 transition-all text-white" placeholder="0.00">
+                    <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 font-black">€</span>
+                </div>
+                <button onclick="checkBudget()" class="bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-2xl">Bilanz validieren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ERFOLG-SCREEN -->
+    <div id="page-transition">
+        <div class="mb-10 text-red-600 animate-bounce">
+            <svg class="w-32 h-32 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+        </div>
+        <h1 class="text-6xl font-black text-white mb-8 italic uppercase tracking-tighter">Finanzieller Ruin</h1>
+        <p class="max-w-2xl text-slate-400 text-2xl leading-relaxed mb-12">
+            Die bittere Wahrheit: Leon fehlen jeden Monat exakt <span class="text-red-500 font-bold underline">74,40 €</span>. Ohne Puffer, ohne Kleidung, ohne Notreserven. Er rutscht jeden Monat tiefer in die Schuldenfalle.
+        </p>
+        <button onclick="alert('Start Raum 4')" class="bg-white text-slate-950 px-20 py-6 rounded-3xl font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl shadow-white/10">Hilfe suchen</button>
+    </div>
+
+    <!-- DOCUMENT OVERLAYS (DETAILED) -->
+
+    <!-- Lohnabrechnung -->
+    <div id="ov-salary" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet">
+            <div class="paper-header">
+                <p><strong>Logistik-Zentrum West GmbH</strong> | Personalabteilung | Münsterstr. 144</p>
+            </div>
+            <div class="paper-content">
+                <h2 class="text-2xl font-black mb-10 border-b-4 border-slate-900 pb-2">Entgeltabrechnung für Feb. 2026</h2>
+                <div class="space-y-6">
+                    <p>Personal-Nr: 8820-LS | Abrechnungszeitraum: 01.02.2026 - 28.02.2026</p>
+                    <table class="table-legal">
+                        <thead><tr class="bg-slate-50"><th>Bezeichnung</th><th>Betrag in EUR</th></tr></thead>
+                        <tbody>
+                            <tr><td>Bruttogehalt (Auszubildender)</td><td>1.240,00</td></tr>
+                            <tr><td>Lohnsteuer (Stkl. I)</td><td>- 85,00</td></tr>
+                            <tr><td>Krankenversicherung (Arbeitnehmeranteil)</td><td>- 105,40</td></tr>
+                            <tr><td>Rentenversicherung (Arbeitnehmeranteil)</td><td>- 99,60</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="flex justify-between font-black text-3xl pt-10 border-t-2 border-slate-900">
+                        <span>AUSZAHLUNGSBETRAG:</span> <span>950,00 €</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mietvertrag -->
+    <div id="ov-rent" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet italic">
+            <div class="paper-header not-italic">
+                <p><strong>Hausverwaltung "Schöner Wohnen"</strong> | Mietobjekt: Westpark 4</p>
+            </div>
+            <div class="paper-content">
+                <h2 class="text-3xl font-black not-italic mb-10 border-b-2 pb-2 uppercase italic tracking-tighter text-slate-800">Mietvertrag MV-2024-L</h2>
+                <p class="mb-6">§ 4.1 Die monatliche Nettokaltmiete für die überlassenen Wohnräume (1 Zimmer, Bad, Kochnische) beträgt 280,00 Euro.</p>
+                <p class="mb-10 leading-relaxed font-serif">§ 4.2 Zusätzlich zur Grundmiete leistet der Mieter eine monatliche Vorauszahlung auf die Betriebskosten gemäß § 2 BetrKV in Höhe von 70,00 Euro. Darin enthalten sind anteilige Kosten für Heizung, Wasser sowie die gesetzlich vorgeschriebene Brandversicherung. Die Kosten für Breitbandinternet und Kabel-TV sind nicht Bestandteil dieser Vorauszahlung.</p>
+                <div class="p-10 border-4 border-slate-900 text-center not-italic bg-slate-50 shadow-inner">
+                    <p class="text-xs font-black uppercase mb-2 tracking-widest">GESAMTMIETE (WARM) MONATLICH:</p>
+                    <p class="text-6xl font-black italic">350,00 €</p>
+                </div>
+                <div class="fine-print not-italic mt-10 text-[10px]">Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist das Amtsgericht am Ort der Mietsache.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Versicherung -->
+    <div id="ov-ins" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet">
+            <div class="paper-header">
+                <p><strong>SicherPlus Versicherungs-AG</strong> | Direktion Berlin</p>
+            </div>
+            <div class="paper-content text-sm">
+                <h2 class="text-2xl font-black mb-8 border-b pb-2 text-blue-900 italic">Versicherungsschein: Privathaftpflicht</h2>
+                <p class="mb-4">Sehr geehrter Leon S., Ihr Versicherungsschutz (Tarif: SicherBasis) bietet Deckung bis 50 Mio. EUR für Personen-, Sach- und Vermögensschäden. Eingeschlossen sind Mietsachschäden und der Verlust von fremden Schlüsseln.</p>
+                <div class="bg-blue-50 p-10 border-2 border-blue-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-100 rounded-full opacity-50"></div>
+                    <p class="mb-4">Ihre Beitragsberechnung für das Versicherungsjahr 2026:</p>
+                    <div class="flex justify-between font-black text-2xl text-blue-950 mt-10">
+                        <span>JAHRES-GESAMTBEITRAG:</span> <span>120,00 €</span>
+                    </div>
+                </div>
+                <p class="mt-8 font-bold text-red-700 italic">Zahlungsweise: Jährlich zum 01.01. im Voraus.</p>
+                <div class="fine-print">Didaktischer Hinweis für Leon: In deinem Haushaltsplan musst du den Anteil für EINEN Monat (1/12) einplanen. Wer das Geld nicht beiseitelegt, wird im Januar böse überrascht.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Handy-Falle -->
+    <div id="ov-phone" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet">
+            <div class="paper-header">
+                <p><strong>Connect-All GmbH</strong> | Rechnungsservice | Rechnungs-Nr: 2026-02-X</p>
+            </div>
+            <div class="paper-content">
+                <h2 class="text-2xl font-black mb-8 uppercase tracking-tighter">Ihre Mobilfunkrechnung Feb. 2026</h2>
+                <table class="table-legal">
+                    <tr class="bg-slate-100 font-bold"><td>Position</td><td>Details</td><td>Betrag (EUR)</td></tr>
+                    <tr><td>Flat-Tarif XL</td><td>Telefonie & SMS in alle Netze</td><td>24,99</td></tr>
+                    <tr><td>Daten-Option</td><td>10 GB Highspeed (LTE)</td><td>5,00</td></tr>
+                    <tr><td>Hardware-Miete</td><td>Smartphone Rate 12/24</td><td>10,00</td></tr>
+                    <tr><td>Drittanbieter*</td><td>Premium Game Content (M-Payment)</td><td>5,01</td></tr>
+                    <tr class="font-black text-xl"><td>GESAMTSUMME</td><td></td><td>45,00 €</td></tr>
+                </table>
+                <p class="mt-10 text-[10px] text-slate-400 italic leading-snug">*Hinweis zu Drittanbietern: Abgerechnet über das Mobilfunk-Portal. Dies sind oft Abonnements, die Leon durch einfaches Klicken in Apps abgeschlossen hat.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PS5 Kredit -->
+    <div id="ov-ps5" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet border-l-[20px] border-red-700">
+            <div class="paper-header">
+                <p><strong>Amazon Pay Partner-Bank</strong> | Kreditverwaltung</p>
+            </div>
+            <div class="paper-content">
+                <h2 class="text-3xl font-black text-red-800 mb-8 uppercase tracking-tighter italic">Kreditbestätigung</h2>
+                <p class="mb-10 text-lg leading-relaxed">Wir bestätigen den Ratenplan für den Kaufgegenstand <strong>Sony PlayStation 5 Ultimate Bundle</strong>. Wir weisen darauf hin, dass bei Zahlungsverzug von zwei Raten der gesamte Restbetrag sofort fällig wird (§ 498 BGB).</p>
+                <div class="p-8 bg-red-50 border-y-2 border-red-200">
+                    <p class="text-2xl mb-2">Vereinbarte Monatsrate: <strong class="float-right">35,00 €</strong></p>
+                    <p class="text-sm opacity-60">Laufzeit: 36 Monate | Effektiver Jahreszins: 15,0 %</p>
+                </div>
+                <div class="fine-print">Achtung: Dies ist eine klassische Konsum-Schuldenfalle. Über 3 Jahre zahlt Leon fast das Doppelte des Normalpreises durch Zinsen und Gebühren.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Abos (Versteckte Info) -->
+    <div id="ov-subs-1" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet border-t-[12px] border-purple-800">
+            <div class="paper-header"><p><strong>Netcloud Streaming S.A.</strong> | billing@netcloud.com</p></div>
+            <div class="paper-content">
+                <h2 class="text-2xl font-black mb-8 text-purple-900">Bestellbestätigung - Ihr 4K-Entertainment</h2>
+                <p class="mb-6 leading-relaxed">Hallo Leon S., vielen Dank für Ihr Vertrauen. Ihr Paket wurde erfolgreich auf 'Family-Plus' hochgestuft.</p>
+                <div class="p-10 border-4 border-purple-100 bg-purple-50 space-y-4">
+                    <div class="flex justify-between border-b pb-4"><span>Monatlicher Basisbeitrag:</span> <span>9,90 €</span></div>
+                    <div class="flex justify-between font-black text-2xl pt-4"><span>GESAMTPREIS:</span> <span>14,90 €*</span></div>
+                </div>
+                <p class="mt-10 text-[9px] text-slate-400 italic leading-snug">*Inklusive 5,00 € HD/4K-Zusatzoption. Kündigungsfrist: 24 Stunden vor Ablauf des Abrechnungsmonats.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ov-subs-2" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet border-t-[12px] border-emerald-700">
+            <div class="paper-header"><p><strong>Fitness-Welt Musterstadt</strong> | Mitgliederverwaltung</p></div>
+            <div class="paper-content">
+                <h2 class="text-2xl font-black mb-10 text-emerald-900 uppercase">Beitragsmitteilung Feb. 2026</h2>
+                <p class="mb-8 italic">"Dein Körper ist dein Tempel. Lass uns gemeinsam wachsen."</p>
+                <p class="mb-10 text-lg leading-relaxed">Hallo Leon, anbei die Aufschlüsselung deines Beitrags für diesen Monat. Bitte beachte, dass wir diesen Monat die vereinbarte Service-Pauschale für die Trainerberatung und Spindnutzung mit einziehen.</p>
+                <div class="bg-emerald-50 p-10 border-2 border-emerald-100">
+                    <div class="flex justify-between font-bold mb-4"><span>Grundbeitrag (Auszubi-Tarif):</span> <span>15,00 €</span></div>
+                    <div class="flex justify-between border-t border-emerald-200 pt-6 font-black text-2xl text-emerald-950">
+                        <span>ABBUCHUNG FEBRUAR:</span> <span>15,00 €*</span>
+                    </div>
+                </div>
+                <p class="mt-8 text-[10px] text-slate-500 font-serif leading-relaxed">*Der Betrag von 15,00 € ist fix kalkuliert. Im Kleingedruckten deines Vertrags steht, dass halbjährlich eine zusätzliche Gebühr von 29,90 € fällig wird – im Haushaltsbuch rechnen wir diesen Monat aber mit dem fixen Posten von 15 €.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quittungen -->
+    <div id="ov-food" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="receipt-pile max-w-xs rotate-[-1deg] shadow-2xl">
+                <h3 class="text-center font-bold mb-6 underline uppercase">BELEG-SAMMLUNG FEB.</h3>
+                <div class="space-y-4 font-mono text-[11px]">
+                    <p>02.02. Supermarkt A (Einkauf): <span class="float-right">54,50</span></p>
+                    <p>08.02. Bäcker & Snacks: <span class="float-right">22,00</span></p>
+                    <p>12.02. Supermarkt A (Getränke): <span class="float-right">61,20</span></p>
+                    <p>19.02. Drogerie (Hyg.): <span class="float-right">18,30</span></p>
+                    <p>25.02. Supermarkt B (Vorr.): <span class="float-right">98,50</span></p>
+                    <div class="border-t-2 border-black pt-4 font-black text-lg">
+                        TOTAL: <span class="float-right">254,50 €</span>
+                    </div>
+                </div>
+                <p class="text-[8px] mt-10 text-center opacity-40 uppercase">*** Vielen Dank für Ihren Einkauf! ***</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Geldautomat -->
+    <div id="ov-cash" class="doc-overlay">
+        <div class="flex justify-end"><button onclick="closeDoc()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper-sheet flex flex-col items-center justify-center text-center">
+            <div class="border-[15px] border-double border-slate-900 p-12 w-full max-w-lg shadow-2xl bg-white">
+                <h2 class="text-2xl font-black mb-8 border-b-2 border-slate-900 pb-4 uppercase">BANK-AUTOMAT QUITTUNG</h2>
+                <p class="text-sm uppercase mb-10 tracking-[0.4em] font-black">AUSZAHLUNG ERFOLGREICH</p>
+                <div class="text-7xl font-black mb-12 italic tracking-tighter">300,00 €</div>
+                <p class="text-sm italic mb-10 opacity-70 leading-relaxed font-serif">Konto: Leon S.<br>Limitprüfung: ERFOLGT (Dispositionskredit genutzt)</p>
+                <div class="fine-print border-t pt-6 text-red-600 font-bold italic">Hinweis: Für die Inanspruchnahme des Überziehungskredits fallen Sollzinsen in Höhe von 14,5% p.a. an.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function hideStory() {
+            const intro = document.getElementById('story-intro');
+            intro.style.opacity = '0';
+            setTimeout(() => intro.style.display = 'none', 1000);
+        }
+
+        let activeElement = null;
+        let offset = { x: 0, y: 0 };
+        let zCounter = 100;
+
+        function focusDoc(el) { activeElement = el; el.style.zIndex = ++zCounter; }
+
+        document.querySelectorAll('.doc').forEach(doc => {
+            const startHandler = (e) => {
+                focusDoc(doc);
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                offset.x = clientX - doc.offsetLeft;
+                offset.y = clientY - doc.offsetTop;
+            };
+            doc.addEventListener('mousedown', startHandler);
+            doc.addEventListener('touchstart', startHandler);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!activeElement) return;
+            activeElement.style.left = (e.clientX - offset.x) + 'px';
+            activeElement.style.top = (e.clientY - offset.y) + 'px';
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!activeElement) return;
+            e.preventDefault(); 
+            activeElement.style.left = (e.touches[0].clientX - offset.x) + 'px';
+            activeElement.style.top = (e.touches[0].clientY - offset.y) + 'px';
+        }, { passive: false });
+
+        document.addEventListener('mouseup', () => activeElement = null);
+        document.addEventListener('touchend', () => activeElement = null);
+
+        function openDoc(id) { document.getElementById(id).classList.add('active'); }
+        function closeDoc() { document.querySelectorAll('.doc-overlay').forEach(o => o.classList.remove('active')); }
+
+        function checkBudget() {
+            /* RECHNUNGSLOGIK (WICHTIG):
+               Einkommen (Lohn): +950.00
+               
+               Fixkosten:
+               - Miete (Warm): 350.00
+               - Versicherung (Anteil 120/12): 10.00 <-- Didaktische Hürde 1
+               - Handy (Inkl. Drittanbieter): 45.00  <-- Didaktische Hürde 2
+               - PS5 Rate: 35.00
+               
+               Variable/Bar:
+               - Lebensmittel (Summe): 254.50
+               - Abos (Netcloud 14.90 + Fitness 15.00): 29.90 <-- Didaktische Hürde 3
+               - Bar-Auszahlung: 300.00
+               
+               SUMME KOSTEN: 350 + 10 + 45 + 35 + 254.50 + 29.90 + 300 = 1024.40
+               SALDO: 950 - 1024.40 = -74.40
+            */
+            const result = document.getElementById('final-result').value.replace(',', '.');
+            if (parseFloat(result) === -74.40 || parseFloat(result) === 74.40) {
+                document.getElementById('page-transition').classList.add('active');
+            } else {
+                alert("BILANZ FEHLERHAFT!\n\nHinweise:\n1. Versicherung ist eine JAHRESrechnung.\n2. In der Handy-Rechnung versteckt sich ein Drittanbieter-Abo.\n3. Hast du beide Abos addiert?");
+            }
+        }
+    </script>
+</body>
+</html>
+
+
