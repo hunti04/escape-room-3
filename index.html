@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Station 2: Das Chaos auf dem Tisch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Kalam:wght@400;700&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #1a1a1a; 
+            color: #f8fafc;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        /* Hintergrund: Massive dunkle Holzplatte */
+        .table-bg {
+            position: fixed;
+            inset: 0;
+            background-image: url('https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.35) contrast(1.1);
+            z-index: -1;
+        }
+
+        #table-surface {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Brief-Umschlag Design */
+        .letter {
+            position: absolute;
+            width: 260px;
+            height: 170px;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border-radius: 2px;
+            transition: transform 0.1s ease;
+            background: #fdfdfd;
+            border: 1px solid #ddd;
+        }
+        .letter:active { cursor: grabbing; z-index: 500 !important; }
+        
+        .envelope-window {
+            width: 140px;
+            height: 60px;
+            background: #f4f4f4;
+            border: 1px inset #eee;
+            margin-top: 15px;
+            padding: 8px;
+            font-size: 9px;
+            color: #444;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Fullscreen Overlays */
+        .letter-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 1000;
+            display: none;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        .letter-overlay.active { display: flex; flex-direction: column; }
+
+        .paper {
+            background: #fff;
+            color: #1e293b;
+            padding: 3rem;
+            max-width: 800px;
+            width: 100%;
+            margin: 1rem auto;
+            box-shadow: 0 0 70px rgba(0,0,0,0.7);
+            font-family: 'Times New Roman', Times, serif;
+            position: relative;
+            min-height: 95vh;
+            border: 1px solid #ddd;
+        }
+
+        .paper-header {
+            font-family: Arial, sans-serif;
+            font-size: 0.75rem;
+            margin-bottom: 3rem;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .paper-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Handschriftlicher Zettel-Stil */
+        .handwritten-note {
+            background: #fef08a;
+            color: #854d0e;
+            font-family: 'Kalam', cursive;
+            padding: 2.5rem;
+            max-width: 450px;
+            margin: auto;
+            box-shadow: 5px 10px 30px rgba(0,0,0,0.3);
+            border-radius: 2px;
+            transform: rotate(1deg);
+        }
+
+        /* Unteres Kontrollzentrum */
+        .lock-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+            padding: 0.75rem 1.5rem;
+        }
+
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .btn-open {
+            @apply mt-auto bg-slate-100 text-[10px] py-2 rounded font-bold hover:bg-slate-200 transition-colors uppercase tracking-widest text-slate-600 border border-slate-200;
+        }
+
+        /* Erfolg-Screen */
+        #success-screen {
+            position: fixed;
+            inset: 0;
+            background: #020617;
+            z-index: 5000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        #success-screen.active { display: flex; animation: fadeIn 1s forwards; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .legal-footer {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="table-bg"></div>
+
+    <!-- NARRATIVE EINFÜHRUNG -->
+    <div id="story-intro" class="fixed inset-0 z-[2000] bg-slate-950 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-1000">
+        <div class="w-20 h-20 bg-red-600/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20 shadow-2xl">
+            <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        </div>
+        <h2 class="text-red-500 font-black tracking-[0.4em] uppercase text-xs mb-4">März 2026 - Konsequenzen</h2>
+        <p class="max-w-md text-slate-300 italic leading-relaxed mb-10 text-lg">
+            "Leons Ignoranz hat einen Preis. Der Briefberg auf dem Tisch ist kein Chaos mehr, sondern eine rechtliche Falle. Ordne die Dokumente chronologisch und finde die Aktenzeichen, um den finalen Vollstreckungsschlag abzuwehren."
+        </p>
+        <button onclick="hideStory()" class="bg-white text-slate-950 px-12 py-3 rounded-xl font-black active:scale-95 transition-all shadow-2xl uppercase tracking-widest">Post sichten</button>
+    </div>
+
+    <div id="table-surface">
+        <!-- PERSÖNLICHER BRIEF (Tipp) -->
+        <div class="letter rotate-[-5deg]" style="top:55%; left:42%; z-index:90;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <p class="text-[10px] font-bold text-slate-800 italic underline">Wichtig!</p>
+            <div class="mt-4 text-[12px] font-serif">Leon - bitte lesen!</div>
+            <button onclick="openOverlay('ov-tip')" class="btn-open bg-yellow-50">Öffnen</button>
+        </div>
+
+        <!-- RELEVANTE BRIEFUMSCHLÄGE -->
+        <div class="letter rotate-[-4deg]" style="top:20%; left:10%; z-index:10;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <p class="text-[9px] font-black text-blue-900 border-b pb-1">Amazon Payments</p>
+            <div class="envelope-window">Leon S.<br>Musterstraße 12<br>12345 Musterstadt</div>
+            <button onclick="openOverlay('ov-m1')" class="btn-open">Brief lesen</button>
+        </div>
+
+        <div class="letter rotate-[8deg]" style="top:40%; left:20%; z-index:5;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <p class="text-[9px] font-bold text-slate-600">Mahnwesen Intern</p>
+            <div class="envelope-window font-black text-red-700 uppercase">3. MAHNSTUFE</div>
+            <button onclick="openOverlay('ov-m3')" class="btn-open">Inhalt prüfen</button>
+        </div>
+
+        <div class="letter rotate-[-12deg]" style="top:15%; left:50%; z-index:8;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <p class="text-[9px] font-black text-red-800 uppercase italic">FORDER-NOW INKASSO</p>
+            <div class="envelope-window">NICHT IGNORIEREN</div>
+            <button onclick="openOverlay('ov-ink')" class="btn-open bg-red-50">Schreiben lesen</button>
+        </div>
+
+        <div class="letter bg-yellow-50 border-2 border-yellow-400 rotate-[5deg]" style="top:50%; left:60%; z-index:3;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <p class="text-[9px] font-black text-black uppercase">AMTSGERICHT</p>
+            <div class="envelope-window" style="background:#fffde7">ZUSTELLUNGSURKUNDE</div>
+            <button onclick="openOverlay('ov-ger')" class="btn-open bg-yellow-400 text-black border-none font-bold">Bescheid öffnen</button>
+        </div>
+
+        <!-- WERBUNG -->
+        <div class="letter bg-gradient-to-br from-yellow-400 to-orange-500 rotate-[15deg] shadow-2xl" style="top:30%; left:35%; z-index:50;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <p class="text-2xl font-black text-white italic drop-shadow-lg text-center uppercase tracking-tighter">WINNER!</p>
+            <button onclick="openOverlay('ov-spam-1')" class="btn-open bg-white/30 text-white mt-auto border-none">Prüfen</button>
+        </div>
+
+        <div class="letter bg-white rotate-[-15deg] shadow-2xl" style="top:50%; left:12%; z-index:40;" onmousedown="focusLetter(this)" ontouchstart="focusLetter(this)">
+            <div class="h-20 w-full bg-slate-200 rounded flex flex-col items-center justify-center mb-2 text-center p-2">
+                <span class="text-[10px] font-black text-red-600 uppercase">Pizza Luigi</span>
+            </div>
+            <button onclick="openOverlay('ov-spam-2')" class="btn-open">Menü</button>
+        </div>
+    </div>
+
+    <!-- CODE EINGABE PORTAL -->
+    <div class="lock-panel">
+        <div class="max-w-screen-sm mx-auto flex items-center justify-center gap-4">
+            <div class="flex justify-center gap-2">
+                <input type="number" id="c1" class="w-10 h-14 bg-black/40 border border-slate-700 text-center text-2xl font-black rounded-xl outline-none focus:border-red-600 transition-all text-white shadow-inner" placeholder="?">
+                <input type="number" id="c2" class="w-10 h-14 bg-black/40 border border-slate-700 text-center text-2xl font-black rounded-xl outline-none focus:border-red-600 transition-all text-white shadow-inner" placeholder="?">
+                <input type="number" id="c3" class="w-10 h-14 bg-black/40 border border-slate-700 text-center text-2xl font-black rounded-xl outline-none focus:border-red-600 transition-all text-white shadow-inner" placeholder="?">
+                <input type="number" id="c4" class="w-10 h-14 bg-black/40 border border-slate-700 text-center text-2xl font-black rounded-xl outline-none focus:border-red-600 transition-all text-white shadow-inner" placeholder="?">
+            </div>
+            <button onclick="checkFinalCode()" class="bg-red-600 hover:bg-red-700 px-6 py-4 rounded-xl font-black text-white text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-lg">Widerspruch senden</button>
+        </div>
+    </div>
+
+    <!-- ERFOLGSBILDSCHIRM -->
+    <div id="success-screen">
+        <div class="mb-8">
+            <svg class="w-24 h-24 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h2 class="text-4xl font-black text-blue-400 mb-4 tracking-tighter italic uppercase">Einspruch eingereicht</h2>
+        <p class="max-w-lg text-slate-300 text-lg leading-relaxed mb-10">
+            Leon hat die Frist gerade noch gewahrt. Der automatische Vollstreckungsbescheid wurde gestoppt. Doch nun steht er vor dem Scherbenhaufen seiner Finanzen. Er braucht Hilfe. Professionelle Hilfe.
+        </p>
+        <button onclick="alert('Weiter zu Raum 3: Das Haushaltsbuch')" class="bg-white text-slate-950 px-14 py-4 rounded-2xl font-black hover:scale-105 transition-transform uppercase tracking-widest shadow-2xl">Weiter zum Kassensturz</button>
+    </div>
+
+    <!-- OVERLAYS (DETAILED) -->
+    
+    <div id="ov-m1" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper">
+            <div class="paper-header">
+                <p><strong>Amazon Payments Europe S.a.r.l.</strong></p>
+                <p>Abteilung Kreditorenbuchhaltung | 38 Avenue John F. Kennedy, L-1855 Luxembourg</p>
+            </div>
+            <div class="paper-content">
+                <p class="text-right">Luxemburg, den 10.12.2025</p>
+                <br>
+                <p class="font-bold underline uppercase">Zahlungserinnerung - Kundenkonto: LEON-NB-2026</p>
+                <br>
+                <p>Sehr geehrter Herr S.,</p>
+                <br>
+                <p>bei einer routinemäßigen Überprüfung Ihres Kontos mussten wir feststellen, dass der Ausgleich für Ihre Bestellung "Sony PlayStation 5 Konsole (Disc Edition)" vom 01.12. bisher nicht verzeichnet werden konnte.</p>
+                <p>Es kann vorkommen, dass eine Zahlung übersehen wird. Wir bitten Sie daher höflich, den fälligen Betrag innerhalb der nächsten 7 Tage unter Angabe des Aktenzeichens <strong>AZ-2025-409</strong> anzuweisen.</p>
+                <p>Sollten Sie die Zahlung bereits vorgenommen haben, betrachten Sie dieses Schreiben bitte als gegenstandslos.</p>
+                <br>
+                <p>Mit freundlichen Grüßen</p>
+                <p>Ihre Finanzabteilung</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ov-m3" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper">
+            <div class="paper-header">
+                <p><strong>Amazon Payments Europe S.a.r.l.</strong></p>
+            </div>
+            <div class="paper-content">
+                <p class="text-right font-black text-red-600 uppercase tracking-widest">LETZTE AUSSERGERICHTLICHE MAHNUNG</p>
+                <p class="text-right text-xs">Datum: 15.01.2026</p>
+                <br>
+                <p>Sehr geehrter Herr S.,</p>
+                <br>
+                <p>Sie haben auf unsere vorangegangenen Zahlungserinnerungen nicht reagiert. Wir bedauern Ihnen mitteilen zu müssen, dass dies unser letzter schriftlicher Versuch ist, die Angelegenheit ohne die Einschaltung externer Dienstleister zu klären.</p>
+                <p>Wir fordern Sie auf, den Gesamtbetrag inkl. Mahngebühren (15,00 €) unverzüglich, spätestens jedoch bis zum 22.01.2026, unter Angabe der Referenz <strong>21-AMZ-212</strong> auf das unten genannte Konto zu überweisen.</p>
+                <p>Bei fruchtlosem Ablauf dieser Frist werden wir den Vorgang umgehend an unser Partner-Inkassounternehmen übergeben. Hierbei entstehen Ihnen weitere, erhebliche Kosten (§ 286 BGB).</p>
+                <br>
+                <p>Hochachtungsvoll</p>
+                <p>Zentrale Mahnabteilung</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ov-ink" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper">
+            <div class="paper-content">
+                <h2 class="text-2xl font-black text-red-800 border-b-4 border-red-800 pb-2 mb-6 uppercase">FORDER-NOW Inkasso GmbH</h2>
+                <p class="text-xs italic mb-8">Zugelassener Inkassodienstleister gemäß § 10 Abs. 1 Nr. 1 RDG</p>
+                
+                <p class="font-bold mb-4">ZAHLUNGSAUFFORDERUNG - EINLEITUNG DES MAHNVERFAHRENS</p>
+                <p class="mb-6">Sehr geehrter Herr S., wir wurden von der Amazon Payments Europe bevollmächtigt, die gegen Sie bestehende Forderung inkl. Verzugszinsen einzuziehen. Eine Vollmacht liegt uns vor.</p>
+                
+                <p class="font-bold mb-2">Forderungsaufstellung:</p>
+                <table class="w-full text-sm mb-8 border border-slate-100">
+                    <tr class="bg-slate-50 border-b"><td class="p-2 italic text-xs">Position</td><td class="p-2 text-right italic text-xs">Betrag</td></tr>
+                    <tr class="border-b"><td class="p-2">Hauptforderung (Amazon PS5)</td><td class="text-right p-2">150,00 €</td></tr>
+                    <tr class="border-b"><td class="p-2">Verzugszinsen (5%-Punkte über Basis)</td><td class="text-right p-2">4,50 €</td></tr>
+                    <tr class="border-b"><td class="p-2">Inkassovergütung (1,3 Gebühr)</td><td class="text-right p-2">80,00 €</td></tr>
+                    <tr class="font-black"><td class="p-2">GESAMTBETRAG</td><td class="text-right p-2 underline">234,50 €</td></tr>
+                </table>
+                
+                <p class="mb-8">Wir fordern Sie auf, den Betrag bis zum 05.02.2026 zu begleichen. Sollte die Zahlung nicht fristgerecht eingehen, werden wir unserem Auftraggeber empfehlen, das gerichtliche Mahnverfahren einzuleiten.</p>
+                <p class="text-xs text-slate-500 mb-2 italic">Aktenzeichen für alle Rückfragen:</p>
+                <p class="text-2xl font-black tracking-widest border-2 border-slate-900 p-4 inline-block shadow-inner">FN-2026-F-8</p>
+                
+                <div class="legal-footer">
+                    Gf. Dr. Jur. M. Geiz | Registergericht Musterstadt HRB 1234
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ov-ger" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper" style="background: #fffdf5; border: 2px solid #facc15;">
+            <div class="bg-yellow-400 p-6 text-center text-sm font-black uppercase mb-8 shadow-md tracking-[0.2em]">AMTSGERICHT - GERICHTLICHER MAHNBESCHEID</div>
+            <div class="paper-content text-sm italic">
+                <p class="mb-4"><strong>Zustellungsurkunde gem. §§ 166 ff. ZPO</strong></p>
+                <p class="mb-8">Antragsteller: Amazon Payments Europe S.a.r.l., Luxemburg<br>Antragsgegner: Leon S., Musterstraße 12, 12345 Musterstadt</p>
+                
+                <p class="mb-6 font-bold not-italic underline">Rechtsbehelfsbelehrung:</p>
+                <p class="leading-relaxed mb-8">Gegen diesen Mahnbescheid können Sie innerhalb von zwei Wochen ab der Zustellung Widerspruch beim Amtsgericht erheben. Wird kein Widerspruch erhoben, kann der Antragsteller auf dieser Grundlage einen Vollstreckungsbescheid beantragen, welcher die Grundlage für eine Pfändung bildet.</p>
+                
+                <div class="bg-white border-4 border-black p-8 text-center shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-black"></div>
+                    <p class="text-[10px] font-black uppercase mb-4 not-italic tracking-[0.4em] border-b pb-2 text-slate-500">Geschäftszeichen der Mahnabteilung</p>
+                    <p class="text-5xl font-black tracking-tighter not-italic text-center">77-AG-NRW-5</p>
+                </div>
+                
+                <p class="mt-10 text-[10px] not-italic text-center opacity-70">Ausgefertigt am 15.03.2026 durch Rechtspfleger im automatisierten Verfahren.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ov-tip" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-3xl p-6">✕</button></div>
+        <div class="flex items-center justify-center h-full">
+            <div class="handwritten-note">
+                <p class="font-bold text-lg mb-4 border-b border-yellow-600/30">Leon!</p>
+                <p class="text-xl leading-relaxed">Vergrab dich nicht! Du musst die Briefe nach der rechtlichen Schwere sortieren (Chronologie ist entscheidend!).</p>
+                <p class="mt-6 text-xl font-bold italic">Schau dir die Aktenzeichen genau an. Die jeweils letzte Ziffer der offiziellen Nummern ergibt den vierstelligen Code für den Einspruch.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPAM -->
+    <div id="ov-spam-1" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-4xl p-6">✕</button></div>
+        <div class="paper text-center">
+            <h1 class="text-6xl font-black text-red-600 mb-8 italic">GLÜCKWUNSCH!</h1>
+            <h2 class="text-2xl font-bold mb-6">Sie sind unser VIP-Gewinner des Monats!</h2>
+            <div class="text-left text-sm leading-relaxed text-slate-700 space-y-4">
+                <p>Sehr geehrter Leon S., wir freuen uns, Ihnen mitteilen zu dürfen, dass Ihr Kundenkonto bei der letzten Ziehung unserer Partner-Lotterie als Hauptgewinn gezogen wurde. Ein Bar-Betrag von <strong>5.000,00 €</strong> liegt für Sie zur Auszahlung bereit!</p>
+                <p class="italic text-[10px]">
+                    *Disclaimer: Durch die Anmeldung entstehen monatliche Kosten von 29,90 € für das Gold-Paket. Der Gewinn wird unter allen Teilnehmern im Jahr 2029 neu ausgelost. Glückscode: XL-99-44-Z.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ov-spam-2" class="letter-overlay">
+        <div class="flex justify-end"><button onclick="closeOverlay()" class="text-white text-3xl p-6">✕</button></div>
+        <div class="paper text-center bg-orange-50/30">
+            <h1 class="text-5xl font-black text-red-600 mb-2 uppercase italic tracking-tighter">Pizza Luigi</h1>
+            <div class="grid grid-cols-2 gap-x-12 gap-y-4 text-left font-serif p-8 border-4 border-red-600 mt-6">
+                <div><p class="font-bold border-b">Salami</p></div><p class="text-right font-bold">7,50 €</p>
+                <div><p class="font-bold border-b">Tonno</p></div><p class="text-right font-bold">8,50 €</p>
+                <div class="bg-red-600 text-white p-2 col-span-2 text-center font-bold">Dienstags-Deal: 2 für 1!</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function hideStory() {
+            const intro = document.getElementById('story-intro');
+            intro.style.opacity = '0';
+            setTimeout(() => intro.style.display = 'none', 1000);
+        }
+
+        let activeElement = null;
+        let offset = { x: 0, y: 0 };
+        let zCounter = 100;
+
+        function focusLetter(el) { activeElement = el; el.style.zIndex = ++zCounter; }
+
+        document.querySelectorAll('.letter').forEach(letter => {
+            const startHandler = (e) => {
+                focusLetter(letter);
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                offset.x = clientX - letter.offsetLeft;
+                offset.y = clientY - letter.offsetTop;
+            };
+            letter.addEventListener('mousedown', startHandler);
+            letter.addEventListener('touchstart', startHandler);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!activeElement) return;
+            activeElement.style.left = (e.clientX - offset.x) + 'px';
+            activeElement.style.top = (e.clientY - offset.y) + 'px';
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!activeElement) return;
+            e.preventDefault(); 
+            activeElement.style.left = (e.touches[0].clientX - offset.x) + 'px';
+            activeElement.style.top = (e.touches[0].clientY - offset.y) + 'px';
+        }, { passive: false });
+
+        document.addEventListener('mouseup', () => activeElement = null);
+        document.addEventListener('touchend', () => activeElement = null);
+
+        function openOverlay(id) { document.getElementById(id).classList.add('active'); }
+        function closeOverlay() { document.querySelectorAll('.letter-overlay').forEach(o => o.classList.remove('active')); }
+
+        function checkFinalCode() {
+            const c1 = document.getElementById('c1').value;
+            const c2 = document.getElementById('c2').value;
+            const c3 = document.getElementById('c3').value;
+            const c4 = document.getElementById('c4').value;
+
+            // LÖSUNG: 1. Erinnerung (9), 2. 3. Mahnung (2), 3. Inkasso (8), 4. Mahnbescheid (5) -> 9285
+            if (c1 === "9" && c2 === "2" && c3 === "8" && c4 === "5") {
+                document.getElementById('success-screen').classList.add('active');
+            } else {
+                alert("CODE FEHLERHAFT!\n\nPrüfe die chronologische Mahnabfolge und die Endziffern.");
+            }
+        }
+    </script>
+</body>
+</html>
+
+
